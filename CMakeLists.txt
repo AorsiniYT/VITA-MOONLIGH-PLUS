@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-set(BOREALIS_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/library)
+set(BOREALIS_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/library/borealis/library)
 
 # build options
 include(${BOREALIS_LIBRARY}/cmake/commonOption.cmake)
