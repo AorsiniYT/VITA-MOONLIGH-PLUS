@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Crear directorio de compilación
+rm -rf build_mingw
+mkdir -p build_mingw
+cd build_mingw
+
+# Configurar variables de entorno
+export PATH=/usr/x86_64-w64-mingw32/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Configurar CMake
+cmake .. \
+  -DPLATFORM_DESKTOP=ON \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_TOOLCHAIN_FILE=../library/borealis/library/cmake/MinGWCross.cmake \
+  -DCMAKE_MAKE_PROGRAM=$(which make)
+
+# Compilar
+make -j$(nproc)

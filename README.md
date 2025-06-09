@@ -31,6 +31,7 @@ Cliente Moonlight para PlayStation Vita que permite la transmisión de juegos de
 
 ### Requisitos previos
 
+#### Para compilar para PS Vita:
 - **Docker**
   - Versión 20.10 o superior
   - Requiere permisos de superusuario (sudo) o pertenecer al grupo 'docker'
@@ -43,7 +44,20 @@ Cliente Moonlight para PlayStation Vita que permite la transmisión de juegos de
   - Última versión estable recomendada
   - [Descargar Git](https://git-scm.com/downloads)
 
-### Pasos para compilar
+#### Para compilar para Windows (en Ubuntu):
+```bash
+# Instalar las herramientas de compilación cruzada para Windows
+sudo apt update
+sudo apt install -y g++-mingw-w64-x86-64 gcc-mingw-w64-x86-64 mingw-w64-tools
+
+# Durante la instalación, seleccionar "posix" cuando se solicite
+# (Seleccionar la opción 1: x86_64-w64-mingw32)
+
+# Instalar herramientas adicionales necesarias
+sudo apt install -y cmake make pkg-config
+```
+
+### Compilación para PS Vita
 
 1. Clona el repositorio:
    ```bash
@@ -53,11 +67,25 @@ Cliente Moonlight para PlayStation Vita que permite la transmisión de juegos de
 
 2. Ejecuta el script de compilación:
    ```bash
-   chmod +x makerun
-   ./makerun
+   chmod +x makepsv
+   ./makepsv
    ```
 
-3. Sigue las instrucciones en pantalla para instalar y ejecutar la aplicación
+   El archivo VPK generado estará disponible en la carpeta `build/`.
+
+### Compilación para Windows
+
+1. Asegúrate de tener instaladas todas las dependencias mencionadas arriba.
+
+2. Ejecuta el script de compilación:
+   ```bash
+   chmod +x makewin
+   ./makewin
+   ```
+
+   El ejecutable generado estará disponible en la carpeta `build_mingw/`.
+
+3. Sigue las instrucciones en pantalla para instalar y ejecutar la aplicación en tu PS Vita
 
 ## 🎮 Uso
 
