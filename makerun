@@ -3,85 +3,58 @@
 # Navegar al directorio del proyecto
 cd "$(dirname "$0")"
 
-# Construir con Docker
-if ! docker info > /dev/null 2>&1; then
-    echo "Error: Docker no está corriendo. Inicie el servicio Docker primero."
+echo "[+] Iniciando compilación para PS Vita..."
+
+# Verificar Docker
+if ! docker info &>/dev/null; then
+    echo "Error: Docker no está en ejecución"
     exit 1
 fi
-
-# Asegurar permisos de directorio
-if [ -d "build" ]; then
-    sudo chown -R $USER:$USER build
-fi
-
-# Verificar dependencias externas
-if [ ! -d "library/borealis" ]; then
-    echo "Error: Falta el directorio library/borealis. Clone el repositorio borealis primero."
-    exit 1
-fi
-
-#!/bin/bash
 
 # Configuración
-VITA_IP="192.168.0.193"
-VITA_PORT="1337"
-VITA_CONTROL_PORT="1338"
-VPK_NAME="build/borealis_demo.vpk"
-VITASHELL_ID="VITASHELL"
-TARGET_APP_ID="MLIGHPLUS"
+VITA_IP="192.168.0.193"  # Cambia esto por la IP de tu PS Vita
+VITA_PORT=1337
+VITA_CONTROL_PORT=1338
+VPK_PATH="build/borealis_demo.vpk"
 
-# Función para enviar archivo por FTP
-send_ftp() {
-    echo "Enviando $1 a $2..."
-    curl --ftp-method nocwd -T "$1" "ftp://${VITA_IP}:${VITA_PORT}/$2"
-}
-
-# Función para enviar comando de control
-send_control() {
-    echo "Ejecutando: $1"
-    echo "$1" | nc "$VITA_IP" "$VITA_CONTROL_PORT"
-}
-
-# Construir con Docker
-echo "Construyendo el proyecto..."
-sudo docker run --rm -v $(pwd):/src/ xfangfang/vitasdk_sdl2_gles2:latest \
-  "cd /src && \
-   cmake -B build -G Ninja -DPLATFORM_PSV=ON -DUSE_SYSTEM_SDL2=ON -DCMAKE_BUILD_TYPE=Release && \
+# Compilar con Docker
+echo "[+] Compilando proyecto..."
+mkdir -p build
+docker run --rm -v "$(pwd)":/src/ xfangfang/vitasdk_sdl2_gles2:latest \
+  "cmake -B build -G Ninja -DPLATFORM_PSV=ON -DUSE_SYSTEM_SDL2=ON -DCMAKE_BUILD_TYPE=Release && \
    cmake --build build"
 
-# Verificar generación de VPK
-if [ ! -f "$VPK_NAME" ]; then
-    echo "Error: No se generó el archivo VPK. Archivos en el directorio build:"
+# Verificar si se generó el VPK
+if [ ! -f "$VPK_PATH" ]; then
+    echo "[!] Error: No se generó el VPK"
     ls -la build/
     exit 1
 fi
 
-echo -e "\n¡Archivo VPK generado correctamente!"
-ls -lh "$VPK_NAME"
+VPK_SIZE=$(du -h "$VPK_PATH" | cut -f1)
+echo -e "\n[+] Compilación exitosa! VPK: $VPK_PATH ($VPK_SIZE)"
 
-# Enviar VPK a la PS Vita
-echo -e "\nEnviando VPK a la PS Vita..."
-send_ftp "$VPK_NAME" "ux0:/ABM/"
+# Enviar a la PS Vita
+echo -e "\n[+] Enviando a la PS Vita..."
+curl --ftp-method nocwd -T "$VPK_PATH" "ftp://${VITA_IP}:${VITA_PORT}/ux0:/ABM/"
 
-# Abrir VitaShell
-echo -e "\nAbriendo VitaShell..."
-send_control "launch $VITASHELL_ID"
+echo -e "\n[+] Abriendo VitaShell..."
+echo "launch VITASHELL" | nc "$VITA_IP" "$VITA_CONTROL_PORT"
 
 echo -e "\n==========================================="
-echo "Por favor instala el VPK en VitaShell:"
-echo "1. Navega a ux0:/ABM/"
-echo "2. Selecciona $(basename "$VPK_NAME") y presiona X"
-echo "3. Elige 'Instalar' y confirma"
-echo "4. Presiona O para volver al livearea"
-echo "5. Presiona cualquier tecla aquí cuando la instalación esté completa"
+echo "Instrucciones:"
+echo "1. Ve a ux0:/ABM/ en VitaShell"
+echo "2. Instala $(basename "$VPK_PATH")"
+echo "3. Presiona O para volver al LiveArea"
+echo "4. Presiona ENTER aquí para iniciar la aplicación"
 echo "==========================================="
-read -n 1 -s -r -p ""
 
-# Iniciar la aplicación instalada
-echo -e "\nIniciando $TARGET_APP_ID..."
-send_control "launch $TARGET_APP_ID"
+# Esperar a que el usuario termine de instalar
+read -p "Presiona ENTER para iniciar la aplicación..."
 
-echo "¡Listo!"
-sudo chown -R $USER:$USER build
+# Iniciar la aplicación automáticamente
+echo -e "\n[+] Iniciando la aplicación (MLIGHPLUS)..."
+echo "launch MLIGHPLUS" | nc "$VITA_IP" "$VITA_CONTROL_PORT"
+echo "¡Aplicación iniciada! (MLIGHPLUS)"
 
-echo "Compilación completada. Archivos generados en el directorio build/"
+echo -e "\nCompilación completada. Archivos generados en el directorio build/"
